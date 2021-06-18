@@ -38,4 +38,10 @@
            => [{:n [2 3 4]}])
 
     (check (spock/solve nil '(= [_ _ n] [1 2 3]) {})
-           => [{:n 3}])))
+           => [{:n 3}])
+
+    (check (spock/solve nil '(= 1 1) {})
+           => [{}])
+
+    (check (spock/solve nil '(not= 1 2) {})
+           => [{}])))

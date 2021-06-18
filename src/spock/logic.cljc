@@ -5,8 +5,15 @@
            [it.unibo.tuprolog.core Struct Rule Fact Var Term Conversions Substitution
             Cons]))
 
+(defn- normalize-arg [nameable]
+  (let [n (name nameable)]
+    (case n
+      "not=" "=\\="
+      n)))
+
 (defn- as-atom [keyword]
-  (-> keyword name (Struct/of [])))
+  (Struct/of (normalize-arg keyword) []))
+
 (defn- as-var [symbol]
   (-> symbol name Var/of))
 
@@ -39,7 +46,7 @@
    (as-struct struct-name args))
 
   ([struct-name args -to-prolog]
-   (Struct/of (name struct-name)
+   (Struct/of (normalize-arg struct-name)
               (map #(-to-prolog % -to-prolog) args))))
 
 (defn- as-rule [rule-name args body]
@@ -139,10 +146,3 @@
          iterator-seq
          (filter #(.isYes %))
          (map sol->clj))))
-
-; (str)
-;
-; (solve nil '(:member x [1 2 3]) {})
-;
-; (def n-queens
-;   '[(:n-queens [n qs] [(:length qs n)])])
