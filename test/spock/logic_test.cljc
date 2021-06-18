@@ -31,4 +31,8 @@
           => (m/in-any-order [{:x [] :y [1 2 3]}
                               {:x [1] :y [2 3]}
                               {:x [1 2] :y [3]}
-                              {:x [1 2 3] :y []}]))))
+                              {:x [1 2 3] :y []}])))
+
+  (testing "will convert arrays/numbers"
+    (check (spock/solve nil '(= [_ & n] [1 2 3 4]) {})
+           => [{:n [2 3 4]}])))

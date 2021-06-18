@@ -2,7 +2,8 @@
   (:import [it.unibo.tuprolog.solve Solver SolverFactory Solution]
            [it.unibo.tuprolog.solve.classic ClassicSolver]
            [it.unibo.tuprolog.theory Theory]
-           [it.unibo.tuprolog.core Struct Rule Fact Var Term Conversions Substitution]))
+           [it.unibo.tuprolog.core Struct Rule Fact Var Term Conversions Substitution
+            Cons]))
 
 (defn- as-atom [keyword]
   (-> keyword name (Struct/of [])))
@@ -10,47 +11,56 @@
   (-> symbol name Var/of))
 
 (defprotocol AsProlog
-  (to-prolog [this to-prolog]))
+  (-to-prolog [this -to-prolog]))
 
 (defn- as-fact
   ([fact-name args]
-   (as-fact fact-name args (memoize to-prolog)))
+   (as-fact fact-name args (memoize -to-prolog)))
 
-  ([fact-name args to-prolog]
+  ([fact-name args -to-prolog]
    (.setHeadArgs (Fact/of (as-atom fact-name))
-                 (map #(to-prolog % to-prolog) args))))
+                 (map #(-to-prolog % -to-prolog) args))))
 
 (defn as-struct
   ([struct-name args]
    (as-struct struct-name args))
 
-  ([struct-name args to-prolog]
+  ([struct-name args -to-prolog]
    (Struct/of (name struct-name)
-              (map #(to-prolog % to-prolog) args))))
+              (map #(-to-prolog % -to-prolog) args))))
 
 (defn- as-rule [rule-name args body]
-  (let [to-prolog (memoize to-prolog)]
-    (Rule/of (as-struct rule-name args to-prolog)
+  (let [-to-prolog (memoize -to-prolog)]
+    (Rule/of (as-struct rule-name args -to-prolog)
              (->> body
-                  (map #(to-prolog % to-prolog))
+                  (map #(-to-prolog % -to-prolog))
                   (into-array Term)))))
+
+(defn- as-list [this -to-prolog]
+  (let [[bef after] (split-with #(not= % '&) this)]
+    (if (and (seq bef) (-> after count (= 2)))
+      (let [[fst & rst] bef]
+        (reduce (fn [tail next]
+                  (Cons/of (-to-prolog next -to-prolog) tail))
+                (-> after last (-to-prolog -to-prolog))
+                (reverse bef)))
+      (->> this (map #(-to-prolog % -to-prolog)) Conversions/toTerm))))
 
 (extend-protocol AsProlog
   clojure.lang.Keyword
-  (to-prolog [this _] (as-atom this))
+  (-to-prolog [this _] (as-atom this))
 
   clojure.lang.Symbol
-  (to-prolog [this _] (as-var this))
+  (-to-prolog [this _] (as-var this))
 
   clojure.lang.PersistentList
-  (to-prolog [this to-prolog] (as-struct (first this) (rest this) to-prolog))
+  (-to-prolog [this -to-prolog] (as-struct (first this) (rest this) -to-prolog))
 
   clojure.lang.PersistentVector
-  (to-prolog [this to-prolog]
-    (->> this (map #(to-prolog % to-prolog)) Conversions/toTerm))
+  (-to-prolog [this -to-prolog] (as-list this -to-prolog))
 
   Object
-  (to-prolog [this to-prolog] (Conversions/toTerm this)))
+  (-to-prolog [this -to-prolog] (Conversions/toTerm this)))
 
 (defn as-prolog [params]
   (if (-> params count (= 2))
@@ -104,9 +114,12 @@
        (map sub->clj)
        (into {})))
 
+(defn to-prolog [elem] (-to-prolog elem (memoize -to-prolog)))
+
 (defn solve [p-solver query vars]
   (let [p-solver (or p-solver (solver []))
-        prolog-q (to-prolog query (memoize to-prolog))
+        prolog-q (to-prolog query)
+        _ (println prolog-q)
         i (.. p-solver
               (solve prolog-q)
               iterator)]
@@ -114,3 +127,10 @@
          iterator-seq
          (filter #(.isYes %))
          (map sol->clj))))
+
+; (str)
+;
+; (solve nil '(:member x [1 2 3]) {})
+;
+; (def n-queens
+;   '[(:n-queens [n qs] [(:length qs n)])])
