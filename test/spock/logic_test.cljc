@@ -33,6 +33,9 @@
                               {:x [1 2] :y [3]}
                               {:x [1 2 3] :y []}])))
 
-  (testing "will convert arrays/numbers"
+  (testing "converting some placeholders"
     (check (spock/solve nil '(= [_ & n] [1 2 3 4]) {})
-           => [{:n [2 3 4]}])))
+           => [{:n [2 3 4]}])
+
+    (check (spock/solve nil '(= [_ _ n] [1 2 3]) {})
+           => [{:n 3}])))

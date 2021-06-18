@@ -13,9 +13,22 @@
 (defprotocol AsProlog
   (-to-prolog [this -to-prolog]))
 
+(defn- memoize'
+  "Almost the same as memoize, but ignores _ symbol"
+  [f]
+  (let [mem (atom {})]
+    (fn [& args]
+      (if (-> args first (= '_))
+        (apply f args)
+        (if-let [e (find @mem args)]
+          (val e)
+          (let [ret (apply f args)]
+            (swap! mem assoc args ret)
+            ret))))))
+
 (defn- as-fact
   ([fact-name args]
-   (as-fact fact-name args (memoize -to-prolog)))
+   (as-fact fact-name args (memoize' -to-prolog)))
 
   ([fact-name args -to-prolog]
    (.setHeadArgs (Fact/of (as-atom fact-name))
@@ -30,7 +43,7 @@
               (map #(-to-prolog % -to-prolog) args))))
 
 (defn- as-rule [rule-name args body]
-  (let [-to-prolog (memoize -to-prolog)]
+  (let [-to-prolog (memoize' -to-prolog)]
     (Rule/of (as-struct rule-name args -to-prolog)
              (->> body
                   (map #(-to-prolog % -to-prolog))
@@ -114,12 +127,11 @@
        (map sub->clj)
        (into {})))
 
-(defn to-prolog [elem] (-to-prolog elem (memoize -to-prolog)))
+(defn to-prolog [elem] (-to-prolog elem (memoize' -to-prolog)))
 
 (defn solve [p-solver query vars]
   (let [p-solver (or p-solver (solver []))
         prolog-q (to-prolog query)
-        _ (println prolog-q)
         i (.. p-solver
               (solve prolog-q)
               iterator)]
