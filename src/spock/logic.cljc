@@ -2,7 +2,6 @@
   (:import [it.unibo.tuprolog.solve Solver SolverFactory Solution]
            [it.unibo.tuprolog.solve.classic ClassicSolver]
            [it.unibo.tuprolog.theory Theory]
-           ; [it.unibo.tuprolog.solve.classic]
            [it.unibo.tuprolog.core Struct Rule Fact Var Term Conversions Substitution]))
 
 (defn- as-atom [keyword]
@@ -29,7 +28,6 @@
    (Struct/of (name struct-name)
               (map #(to-prolog % to-prolog) args))))
 
-; (it.unibo.tuprolog.core.Conversions/toTerm '(1 2 3))
 (defn- as-rule [rule-name args body]
   (let [to-prolog (memoize to-prolog)]
     (Rule/of (as-struct rule-name args to-prolog)
@@ -44,8 +42,12 @@
   clojure.lang.Symbol
   (to-prolog [this _] (as-var this))
 
-  clojure.lang.PersistentVector
+  clojure.lang.PersistentList
   (to-prolog [this to-prolog] (as-struct (first this) (rest this) to-prolog))
+
+  clojure.lang.PersistentVector
+  (to-prolog [this to-prolog]
+    (->> this (map #(to-prolog % to-prolog)) Conversions/toTerm))
 
   Object
   (to-prolog [this to-prolog] (Conversions/toTerm this)))
@@ -71,11 +73,23 @@
   it.unibo.tuprolog.core.Var
   (from-prolog [this] (-> this .getName symbol))
 
-  org.gciatto.kt.math.BigInteger
+  it.unibo.tuprolog.core.Integer
   (from-prolog [this] (-> this str bigint))
 
-  it.unibo.tuprolog.core.impl.RealImpl
+  it.unibo.tuprolog.core.Integer
+  (from-prolog [this] (-> this str bigint))
+
+  it.unibo.tuprolog.core.Real
   (from-prolog [this] (-> this str bigdec))
+
+  it.unibo.tuprolog.core.List
+  (from-prolog [this]
+    (if (.isEmptyList this)
+      []
+      (->> this
+           .getUnfoldedList
+           butlast
+           (mapv from-prolog))))
 
   Object
   (from-prolog [this] (.getValue this)))
@@ -90,9 +104,10 @@
        (map sub->clj)
        (into {})))
 
-(defn solve [solver query vars]
-  (let [prolog-q (to-prolog query (memoize to-prolog))
-        i (.. solver
+(defn solve [p-solver query vars]
+  (let [p-solver (or p-solver (solver []))
+        prolog-q (to-prolog query (memoize to-prolog))
+        i (.. p-solver
               (solve prolog-q)
               iterator)]
     (->> i
