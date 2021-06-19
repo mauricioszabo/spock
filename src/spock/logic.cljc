@@ -21,11 +21,11 @@
   (-to-prolog [this -to-prolog]))
 
 (defn- memoize'
-  "Almost the same as memoize, but ignores _ symbol"
+  "Almost the same as memoize, but ignores :_"
   [f]
   (let [mem (atom {})]
     (fn [& args]
-      (if (-> args first (= '_))
+      (if (-> args first (= :_))
         (apply f args)
         (if-let [e (find @mem args)]
           (val e)
@@ -68,10 +68,10 @@
 
 (extend-protocol AsProlog
   clojure.lang.Keyword
-  (-to-prolog [this _] (as-atom this))
+  (-to-prolog [this _] (as-var this))
 
   clojure.lang.Symbol
-  (-to-prolog [this _] (as-var this))
+  (-to-prolog [this _] (as-atom this))
 
   clojure.lang.PersistentList
   (-to-prolog [this -to-prolog] (as-struct (first this) (rest this) -to-prolog))
@@ -97,11 +97,23 @@
   (from-prolog [this]))
 
 (extend-protocol FromProlog
+  it.unibo.tuprolog.core.List
+  (from-prolog [this]
+    (if (.isEmptyList this)
+      []
+      (->> this
+           .getUnfoldedList
+           butlast
+           (mapv from-prolog))))
+
   it.unibo.tuprolog.core.Atom
-  (from-prolog [this] (-> this .getFunctor keyword))
+  (from-prolog [this]
+    (if (.isEmptyList this)
+      []
+      (-> this .getFunctor symbol)))
 
   it.unibo.tuprolog.core.Var
-  (from-prolog [this] (-> this .getName symbol))
+  (from-prolog [this] (-> this .getName keyword))
 
   it.unibo.tuprolog.core.Integer
   (from-prolog [this] (-> this str bigint))
@@ -112,20 +124,11 @@
   it.unibo.tuprolog.core.Real
   (from-prolog [this] (-> this str bigdec))
 
-  it.unibo.tuprolog.core.List
-  (from-prolog [this]
-    (if (.isEmptyList this)
-      []
-      (->> this
-           .getUnfoldedList
-           butlast
-           (mapv from-prolog))))
-
   Object
   (from-prolog [this] (.getValue this)))
 
 (defn- sub->clj [^Substitution s]
-  [(-> s .getKey .getName keyword)
+  [(-> s .getKey from-prolog)
    (-> s .getValue from-prolog)])
 
 (defn- sol->clj [^Solution sol]
