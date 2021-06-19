@@ -1,0 +1,10 @@
+{:deps {it.unibo.tuprolog/solve-jvm {:mvn/version "0.17.4-dev09+485a46b2"}
+        it.unibo.tuprolog/solve-classic-jvm {:mvn/version "0.17.4-dev09+485a46b2"}}
+ :aliases
+ {:test {:extra-paths ["test"]
+         :extra-deps {com.cognitect/test-runner
+                      {:git/url "https://github.com/cognitect-labs/test-runner"
+                       :sha "62ef1de18e076903374306060ac0e8a752e57c86"}
+                      check/check {:mvn/version "0.2.0-SNAPSHOT"}}
+         :exec-fn cognitect.test-runner.api/test
+         :exec-args {:dirs ["test"]}}}}
