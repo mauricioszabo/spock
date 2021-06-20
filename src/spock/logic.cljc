@@ -9,6 +9,8 @@
   (let [n (name nameable)]
     (case n
       "not=" "=\\="
+      "or" ";"
+      "and" ","
       n)))
 
 (defn- as-atom [keyword]

@@ -33,40 +33,16 @@
                               {:x [1 2 3] :y []}])))
 
   (testing "converting some placeholders"
-    (check (spock/solve nil '(= [:_ & :n] [1 2 3 4]) {})
-           => [{:n [2 3 4]}])
+    (check (spock/solve nil '(= [:_ & :n] [1 2 3 4]) {}) => [{:n [2 3 4]}])
+    (check (spock/solve nil '(= [:_ :_ :n] [1 2 3]) {}) => [{:n 3}]))
 
-    (check (spock/solve nil '(= [:_ :_ :n] [1 2 3]) {})
-           => [{:n 3}])
+  (testing "converting equality"
+    (check (spock/solve nil '(= 1 1) {}) => [{}])
+    (check (spock/solve nil '(not= 1 2) {}) => [{}]))
 
-    (check (spock/solve nil '(= 1 1) {})
-           => [{}])
+  (testing "converting or/and"
+    (check (spock/solve nil '(or (= :a 1) (= :a 2)) {})
+           => (m/in-any-order [{:a 1} {:a 2}]))
 
-    (check (spock/solve nil '(not= 1 2) {})
-           => [{}])))
-
-(def n-queens
-  '[(:n_queen [solution]
-              [(= solution [_ _ _ _])
-               (:queen solution 4)])
-    (:up2n [n n [n]] [:!])
-    (:up2n (k,n,[k & tail]) [(< k n)
-                             (:is k1 (+ k 1))
-                             (:up2n k1 n tail)])
-    (:queen ([] _))
-    (:queen ([q & qlist],n) [(:queen qlist, n)
-                             (:up2n 1 n candidate_positions_for_queenq)
-                             (:member q, candidate_positions_for_queenq)
-                             (:check_solution q,qlist, 1)])
-
-    (:check_solution (_ [] _))
-    (:check_solution (q [q1 & qlist] xdist)
-                     [(:not= q q1)
-                      (:is test (:abs (- q1 q)))
-                      (:not= test xdist)
-                      (:is xdist1 (+ xdist 1))
-                      (:check_solution q qlist xdist1)])])
-
-(spock/solve (spock/solver n-queens)
-             '(:n_queen solution)
-             {})
+    (check (spock/solve nil '(and (member :a [1 2 3]) (= :a 2)) {})
+           => [{:a 2}])))
