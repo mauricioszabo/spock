@@ -1,17 +1,10 @@
 (ns spock.logic
+  (:require [spock.commons :refer [normalize-arg]])
   (:import [it.unibo.tuprolog.solve Solver SolverFactory Solution]
            [it.unibo.tuprolog.solve.classic ClassicSolver]
            [it.unibo.tuprolog.theory Theory]
            [it.unibo.tuprolog.core Struct Rule Fact Var Term Conversions Substitution
             Cons]))
-
-(defn- normalize-arg [nameable]
-  (let [n (name nameable)]
-    (case n
-      "not=" "=\\="
-      "or" ";"
-      "and" ","
-      n)))
 
 (defn- as-atom [keyword]
   (Struct/of (normalize-arg keyword) []))
