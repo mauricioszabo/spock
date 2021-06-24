@@ -20,7 +20,7 @@
     and (compose-with body "," nil)
     :- (list ":-"
              (first body)
-             (compose-with body "," nil))
+             (compose-with (rest body) "," nil))
     (apply list (name tag) body)))
 
 (defn normalize-arg [nameable]
