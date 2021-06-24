@@ -27,10 +27,8 @@
                                          (-> this rest as-list)])))))
 
 (defn- as-struct [unparsed]
-  (let [[head & tail] unparsed]
-    (if (string? head)
-      (Compound. head (into-array Term (map to-prolog tail)))
-      (recur (commons/normalize-struct head tail)))))
+  (let [[head & tail] (commons/normalize-struct unparsed)]
+    (Compound. head (into-array Term (map to-prolog tail)))))
 
 (extend-protocol AsProlog
   clojure.lang.Keyword
@@ -85,12 +83,11 @@
          (list 'assert))))
 
 (defn with-rules [rules]
-  (let [list-of-random (atom {})
-        randomize (memoize #(if (symbol? %)
-                              (let [rand (gensym (str % "-"))]
-                                (swap! list-of-random assoc % rand)
-                                rand)
-                              %))
+  (let [trs (->> rules
+                 (map first)
+                 (map (juxt identity #(gensym (str % "-"))))
+                 (into {}))
+        randomize (memoize #(cond-> % (symbol? %) (trs %)))
         new-rules (walk/postwalk randomize rules)
         rules (for [row new-rules
                     :let [parsed (case (count row)
@@ -100,7 +97,7 @@
                 parsed)]
     (doseq [rule rules]
       (-> rule as-struct Query. .oneSolution))
-    (->TemporaryFacts rules @list-of-random)))
+    (->TemporaryFacts rules trs)))
 
 (defprotocol FromProlog
   (from-prolog [this]))
