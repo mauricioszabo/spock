@@ -1,4 +1,5 @@
-(ns spock.commons)
+(ns spock.commons
+  (:require [clojure.walk :as walk]))
 
 (defn- compose-with [tail between wrap]
   (let [tail (if wrap
@@ -12,16 +13,21 @@
          f))
      tail)))
 
-(defn normalize-struct [tag body]
-  (case tag
-    not= (compose-with body "," "=\\=")
-    = (compose-with body "," "=")
-    or (compose-with body ";" nil)
-    and (compose-with body "," nil)
-    :- (list ":-"
-             (first body)
-             (compose-with (rest body) "," nil))
-    (apply list (name tag) body)))
+(defn- inner-normalize-struct [struct-list]
+  (let [[tag & body] struct-list]
+    (case tag
+      not= (compose-with body "," "=\\=")
+      = (compose-with body "," "=")
+      or (compose-with body ";" nil)
+      and (compose-with body "," nil)
+      :- (list ":-"
+               (first body)
+               (compose-with (rest body) "," nil))
+      (apply list (name tag) body))))
+
+(defn normalize-struct [struct-list]
+  (walk/postwalk #(cond-> % (seq? %) inner-normalize-struct)
+                struct-list))
 
 (defn normalize-arg [nameable]
    (case nameable
