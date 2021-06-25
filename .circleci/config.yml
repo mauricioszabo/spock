@@ -11,7 +11,7 @@ jobs:
       - run: sudo apt-get install software-properties-common
       - run: sudo apt-add-repository ppa:swi-prolog/stable
       - run: sudo apt-get install swi-prolog-java
-      - run: mkdir resources && /usr/share/java/jpl.jar /usr/lib/x86_64-linux-gnu/jni/libjpl.so resources/
+      - run: mkdir resources && cp /usr/share/java/jpl.jar /usr/lib/x86_64-linux-gnu/jni/libjpl.so resources/
       - run: lein test
 
   # publish:
