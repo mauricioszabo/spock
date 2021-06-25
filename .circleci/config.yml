@@ -1,0 +1,40 @@
+version: 2.1
+defaults: &defaults
+  docker:
+    - image: circleci/clojure:openjdk-11-lein-node
+
+jobs:
+  test:
+    <<: *defaults
+    steps:
+      - checkout
+      - run:
+          command: lein test
+
+  # publish:
+  #   <<: *defaults
+  #   steps:
+  #     - checkout
+  #     - run: ./scripts/deploy.sh
+
+workflows:
+  version: 2
+  default-workflow:
+    jobs:
+      - test:
+          filters:
+            tags:
+              only:
+                - /^v.+/
+
+      # - publish:
+      #     context: Clojure Libs
+      #     requires:
+      #       - test
+      #     filters:
+      #       tags:
+      #         only:
+      #           - /^v.+/
+      #       branches:
+      #         only:
+      #           - master
