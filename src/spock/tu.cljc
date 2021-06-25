@@ -1,15 +1,10 @@
-(ns spock.logic
+(ns spock.tu
+  (:require [spock.commons :refer [normalize-arg]])
   (:import [it.unibo.tuprolog.solve Solver SolverFactory Solution]
            [it.unibo.tuprolog.solve.classic ClassicSolver]
            [it.unibo.tuprolog.theory Theory]
            [it.unibo.tuprolog.core Struct Rule Fact Var Term Conversions Substitution
             Cons]))
-
-(defn- normalize-arg [nameable]
-  (let [n (name nameable)]
-    (case n
-      "not=" "=\\="
-      n)))
 
 (defn- as-atom [keyword]
   (Struct/of (normalize-arg keyword) []))
@@ -46,8 +41,9 @@
    (as-struct struct-name args))
 
   ([struct-name args -to-prolog]
-   (Struct/of (normalize-arg struct-name)
-              (map #(-to-prolog % -to-prolog) args))))
+   (if (= :- struct-name)
+     (Struct/of ":-" (map #(-to-prolog % -to-prolog) args))
+     (Struct/of (normalize-arg struct-name) (map #(-to-prolog % -to-prolog) args)))))
 
 (defn- as-rule [rule-name args body]
   (let [-to-prolog (memoize' -to-prolog)]
@@ -68,7 +64,10 @@
 
 (extend-protocol AsProlog
   clojure.lang.Keyword
-  (-to-prolog [this _] (as-var this))
+  (-to-prolog [this _]
+    (if (= :- this)
+      (as-atom (symbol ":-"))
+      (as-var this)))
 
   clojure.lang.Symbol
   (-to-prolog [this _] (as-atom this))
@@ -139,13 +138,15 @@
 
 (defn to-prolog [elem] (-to-prolog elem (memoize' -to-prolog)))
 
-(defn solve [p-solver query vars]
-  (let [p-solver (or p-solver (solver []))
-        prolog-q (to-prolog query)
-        i (.. p-solver
-              (solve prolog-q)
-              iterator)]
-    (->> i
-         iterator-seq
-         (filter #(.isYes %))
-         (map sol->clj))))
+(defn solve
+  ([query] (solve {} query))
+  ([{:keys [rules bind]} query]
+   (let [p-solver (or rules (solver []))
+         prolog-q (to-prolog query)
+         i (.. p-solver
+               (solve prolog-q)
+               iterator)]
+     (->> i
+          iterator-seq
+          (filter #(.isYes %))
+          (map sol->clj)))))
