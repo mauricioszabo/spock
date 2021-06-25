@@ -82,6 +82,14 @@
          (list :- fact)
          (list 'assert))))
 
+(defn- normalize-rules [rules]
+  (for [row rules
+        :let [parsed (case (count row)
+                       1 (list 'assert row)
+                       2 (as-fact (nth row 0) (nth row 1))
+                       3 (as-rule (nth row 0) (nth row 1) (nth row 2)))]]
+    parsed))
+
 (defn with-rules [rules]
   (let [trs (->> rules
                  (map first)
@@ -89,15 +97,16 @@
                  (into {}))
         randomize (memoize #(cond-> % (symbol? %) (trs %)))
         new-rules (walk/postwalk randomize rules)
-        rules (for [row new-rules
-                    :let [parsed (case (count row)
-                                   1 (list 'assert row)
-                                   2 (as-fact (nth row 0) (nth row 1))
-                                   3 (as-rule (nth row 0) (nth row 1) (nth row 2)))]]
-                parsed)]
+        rules (normalize-rules new-rules)]
     (doseq [rule rules]
       (-> rule as-struct Query. .oneSolution))
     (->TemporaryFacts rules trs)))
+
+(defn assert-rules [rules]
+  (let [rules (normalize-rules rules)]
+    (doseq [rule rules]
+      (-> rule as-struct Query. .oneSolution))
+    (->TemporaryFacts rules {})))
 
 (defprotocol FromProlog
   (from-prolog [this]))

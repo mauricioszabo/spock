@@ -25,6 +25,13 @@
                                   {:child grandson}])))))
 
 (deftest conversions
+  (testing "will rename only rules' symbols"
+    (with-open [prolog (spock/with-rules '[(get-odd [:a] [(member :a [1 3 5])])])]
+      (check (spock/solve {:rules prolog} '(get-odd :odd))
+             => (m/in-any-order [{:odd 1}
+                                 {:odd 3}
+                                 {:odd 5}]))))
+
   (testing "will convert arrays/numbers"
     (check (spock/solve '(append :x :y [1 2 3]))
           => (m/in-any-order [{:x [] :y [1 2 3]}
@@ -44,92 +51,13 @@
 
     (check (spock/solve '(not= 1 2))
            => [{}])))
-;
-; (def n-queens
-;   '[(:n_queen [solution]
-;               [(= solution [_ _ _ _])
-;                (:queen solution 4)])
-;     (:up2n [n n [n]] [:!])
-;     (:up2n (k,n,[k & tail]) [(< k n)
-;                              (:is k1 (+ k 1))
-;                              (:up2n k1 n tail)])
-;     (:queen ([] _))
-;     (:queen ([q & qlist],n) [(:queen qlist, n)
-;                              (:up2n 1 n candidate_positions_for_queenq)
-;                              (:member q, candidate_positions_for_queenq)
-;                              (:check_solution q,qlist, 1)])
-;
-;     (:check_solution (_ [] _))
-;     (:check_solution (q [q1 & qlist] xdist)
-;                      [(:not= q q1)
-;                       (:is test (:abs (- q1 q)))
-;                       (:not= test xdist)
-;                       (:is xdist1 (+ xdist 1))
-;                       (:check_solution q qlist xdist1)])])
 
-; (spock/solve (spock/solver n-queens)
-;              '(:n_queen solution)
-;              {})
+(deftest ^{:doc "All facts in SWI-Prolog JPL bridge are global. What
+with-facts do is rename most of these facts to be local. In this case,
+the facts will remain global indeed, and `.close` will retract them."}
+  global-asserts
 
-; (def n-queens
-;   '[(n_queen [:solution]
-;              [(= :solution [:_ :_ :_ :_])
-;               (queen :solution 4)])
-;
-;     (up2n [:n :n [:n]] [!])
-;     (up2n (:k :n [:k & :tail]) [(< :k :n)
-;                                 (is :k1 (+ :k 1))
-;                                 (up2n :k1 :n :tail)])
-;     (queen ([] :_))
-;     (queen ([:q & :qlist] :n) [(queen :qlist :n)
-;                                (up2n 1 :n :candidate_positions_for_queenq)
-;                                (member :q, :candidate_positions_for_queenq)
-;                                (check_solution :q :qlist 1)])
-;
-;     (check_solution (:_ [] :_))
-;     (check_solution (:q [:q1 & :qlist] :xdist)
-;                     [(not= :q :q1)
-;                      (is :test (:abs (- :q1 :q)))
-;                      (not= :test :xdist)
-;                      (is :xdist1 (+ :xdist 1))
-;                      (check_solution :q :qlist :xdist1)])])
-
-; (require 'criterium.core)
-; (criterium.core/quick-bench
-;  (spock/solve (spock/solver n-queens)
-;               '(n_queen :s)
-;               {}))
-;
-; (def e (org.jpl7.fli.Prolog/create_engine))
-; (-> (org.jpl7.Query. (org.jpl7.Term/textToTerm "assert(parent(father, son))"))
-;     iterator-seq
-;     doall)
-;
-; (-> (org.jpl7.Query. (org.jpl7.Term/textToTerm "assert(ancestor(X, Y) :- parent(X, Y))"))
-;     iterator-seq
-;     doall)
-;
-; (org.jpl7.Term/textToTerm "B=father, ancestor(B, A)")
-; (-> (org.jpl7.Query. (org.jpl7.Term/textToTerm "ancestor(father, A)"))
-;     iterator-seq
-;     doall)
-;
-; (def q (org.jpl7.Query. (org.jpl7.Term/textToTerm "A = 10")))
-; (doall (iterator-seq q))
-;
-; (org.jpl7.Term/textToTerm "A = 10")
-; (org.jpl7.Term/textToTerm "knows(X, Y) :- parent(X, Y)")
-; (org.jpl7.Compound. "teacher"
-;                     (into-array [(org.jpl7.Atom. "foo")
-;                                  (org.jpl7.Atom. "bar")]))
-; Compound t1 = new Compound(
-;                            "teacher_of",
-;                            new Term[] {
-;                                        new Atom("aristotle"),
-;                                        new Atom("alexander")})
-;
-; ;
-;
-; (org.jpl7.Atom)
-; (println
-;  (System/getProperty "java.library.path"))
+  (with-open [_ (spock/assert-rules family-rules)]
+    (check (spock/solve '(ancestor father :child))
+           => (m/in-any-order '[{:child son}
+                                {:child grandson}]))))
