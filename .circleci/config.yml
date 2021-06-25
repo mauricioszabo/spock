@@ -1,16 +1,18 @@
 version: 2.1
 defaults: &defaults
-  docker:
-    - image: circleci/clojure:openjdk-11-lein-node
+  machine:
+    image: ubuntu-2004:202104-01
 
 jobs:
   test:
     <<: *defaults
     steps:
       - checkout
+      - run: curl https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein
+      - run: chmod +x lein && sudo mv lein /usr/local/bin
       - run: sudo apt-get install software-properties-common
       - run: sudo apt-add-repository ppa:swi-prolog/stable
-      - run: sudo apt-get install swi-prolog-java
+      - run: sudo apt-get install swi-prolog swi-prolog-java
       - run: mkdir resources && cp /usr/share/java/jpl.jar /usr/lib/x86_64-linux-gnu/jni/libjpl.so resources/
       - run: lein test
 
