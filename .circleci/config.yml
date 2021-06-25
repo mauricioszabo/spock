@@ -8,7 +8,7 @@ jobs:
     <<: *defaults
     steps:
       - checkout
-      - run: curl https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein
+      - run: wget https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein
       - run: chmod +x lein && sudo mv lein /usr/local/bin
       - run: sudo apt-get install software-properties-common
       - run: sudo apt-add-repository ppa:swi-prolog/stable
