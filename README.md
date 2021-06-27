@@ -52,6 +52,8 @@ To use SWI, you have to install [SWI-Prolog](https://www.swi-prolog.org/Download
 
 And then copy or link both `jpl.jar` and `libjpl.so` (the one that's installed by the package - mine was on `/usr/share/java/jpl.jar` and `/usr/lib/x86_64-linux-gnu/jni/libjpl.so`) to `resources` directory. Please notice that you the library's name __will differ__ if you're on Windows or MacOSX, so please find the right name for your platform.
 
+**WARNING**: On Linux, at least on Ubuntu, don't COPY the files, SYMLINK them. When you copy, for some reason, calling Java from Prolog fails.
+
 And then, you either assert all facts globally, or "rename" then so they don't conflict with anything that's already asserted, __then__ assert globally. Both will return an object that can be used to retract everything.
 
 If you're using SWI in production, you probably just want to assert everything globally and that's it. If you are doing tests, you probably want to use `with-facts`. If you use `with-facts`, you need to pass the object to the query - otherwise, SWI will not know how to rename the facts/rules. Som considering that you already have the "family-rules` defined, the code is simply:
