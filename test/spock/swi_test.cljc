@@ -52,9 +52,10 @@
     (check (spock/solve '(not= 1 2))
            => [{}])))
 
+(def some-map {"a-key" 10})
 (deftest clojure-objects
   (testing "binds CLJ objects to Prolog"
-    (check (spock/solve {:bind {:map {"a-key" 10}}}
+    (check (spock/solve {:bind {:map some-map}}
                         '(jpl_call :map get ["a-key"] :result))
            => [{:result 10}])))
 
