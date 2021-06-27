@@ -16,11 +16,13 @@ jobs:
       - run: mkdir resources && ln -s /usr/share/java/jpl.jar /usr/lib/x86_64-linux-gnu/jni/libjpl.so resources/
       - run: lein test
 
-  # publish:
-  #   <<: *defaults
-  #   steps:
-  #     - checkout
-  #     - run: ./scripts/deploy.sh
+  publish:
+    <<: *defaults
+    steps:
+      - checkout
+      - run: wget https://github.com/babashka/babashka/releases/download/v0.4.3/babashka-0.4.3-linux-amd64-static.tar.gz && tar -xf babashka-0.4.3-linux-amd64-static.tar.gz
+      - run: curl https://raw.githubusercontent.com/mauricioszabo/clj-lib-deployer/master/deploy-lein.bb -o deploy
+      - run: export TAG=$CIRCLE_TAG && ./bb deploy
 
 workflows:
   version: 2
@@ -32,14 +34,14 @@ workflows:
               only:
                 - /^v.+/
 
-      # - publish:
-      #     context: Clojure Libs
-      #     requires:
-      #       - test
-      #     filters:
-      #       tags:
-      #         only:
-      #           - /^v.+/
-      #       branches:
-      #         only:
-      #           - master
+      - publish:
+          context: Clojure Libs
+          requires:
+            - test
+          filters:
+            tags:
+              only:
+                - /^v.+/
+            branches:
+              only:
+                - master
