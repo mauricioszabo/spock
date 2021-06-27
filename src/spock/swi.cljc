@@ -49,7 +49,10 @@
 
   Object
   (to-prolog [this]
-    (Term/textToTerm (pr-str this))))
+    (cond
+      (string? this) (Term/textToTerm (pr-str this))
+      (number? this) (Term/textToTerm (pr-str this))
+      :else (org.jpl7.JRef. this))))
 
 (defprotocol ITemporaryFacts
   (rename-query [_ q])
@@ -138,13 +141,15 @@
   (from-prolog [this] (.doubleValue this))
 
   Compound
-  (from-prolog [this] (from-compound this)))
+  (from-prolog [this] (from-compound this))
+
+  org.jpl7.JRef
+  (from-prolog [this] (.object this)))
 
 (defn- bind-vals [bind query]
-  (->> bind
-       (map (fn [[k v]] (list '= k v)))
-       (cons query)
-       (cons 'and)))
+  (let [binds (mapv (fn [[k v]] (list '= k v)) bind)
+        and-query (conj binds query)]
+    (cons 'and and-query)))
 
 (defn solve
   ([query] (solve {} query))

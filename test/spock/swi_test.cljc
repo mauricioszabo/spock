@@ -52,6 +52,12 @@
     (check (spock/solve '(not= 1 2))
            => [{}])))
 
+(deftest clojure-objects
+  (testing "binds CLJ objects to Prolog"
+    (check (spock/solve {:bind {:map {"a-key" 10}}}
+                        '(jpl_call :map get ["a-key"] :result))
+           => [{:result 10}])))
+
 (deftest ^{:doc "All facts in SWI-Prolog JPL bridge are global. What
 with-facts do is rename most of these facts to be local. In this case,
 the facts will remain global indeed, and `.close` will retract them."}
