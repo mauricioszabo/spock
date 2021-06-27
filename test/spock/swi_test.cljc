@@ -55,8 +55,7 @@
 (def some-map {"a-key" 10})
 (deftest clojure-objects
   (testing "binds CLJ objects to Prolog"
-    (check (spock/solve {:bind {:map some-map}}
-                        '(jpl_call :map get ["a-key"] :result))
+    (check (spock/solve {:bind {:map some-map}} '(jpl_call :map get ["a-key"] :result))
            => [{:result 10}])))
 
 (deftest ^{:doc "All facts in SWI-Prolog JPL bridge are global. What
