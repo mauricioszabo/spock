@@ -22,6 +22,7 @@ jobs:
       - checkout
       - run: wget https://github.com/babashka/babashka/releases/download/v0.4.3/babashka-0.4.3-linux-amd64-static.tar.gz && tar -xf babashka-0.4.3-linux-amd64-static.tar.gz
       - run: curl https://raw.githubusercontent.com/mauricioszabo/clj-lib-deployer/master/deploy-lein.bb -o deploy
+      - run: lein change :profiles:dev:jvm-opts empty
       - run: export TAG=$CIRCLE_TAG && ./bb deploy
 
 workflows:
