@@ -50,6 +50,8 @@
            => [{}])
 
     (check (spock/solve '(not= 1 2))
+           => [{}])
+    (check (spock/solve '(not= [1 2] [2 1]))
            => [{}])))
 
 (def some-map {"a-key" 10})

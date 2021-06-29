@@ -16,7 +16,7 @@
 (defn- inner-normalize-struct [struct-list]
   (let [[tag & body] struct-list]
     (case tag
-      not= (compose-with body "," "=\\=")
+      not= (compose-with body "," "\\=")
       = (compose-with body "," "=")
       or (compose-with body ";" nil)
       and (compose-with body "," nil)
@@ -31,7 +31,7 @@
 
 (defn normalize-arg [nameable]
    (case nameable
-     not= "=\\="
+     not= "\\="
      or ";"
      and ","
      :- ":-"
