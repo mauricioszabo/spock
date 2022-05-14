@@ -43,7 +43,7 @@ ancestor(X, Y) :- parent(X, Z), ancestor(Z, Y).
 
 ### SWI Prolog
 
-To use SWI, you have to install [SWI-Prolog](https://www.swi-prolog.org/Download.html) on your machine, and also install the [JPL library](https://jpl7.org/). You _also_ need to prepare your environment in a way that it sees the library (`libjpl.so` on Linux, for example) and add `jpl.jar` on your classpath. On `lein`, it means adding the following lines:
+To use SWI, you have to install [SWI-Prolog](https://www.swi-prolog.org/Download.html) on your machine (the version MUST BE >8.0.0 - Ubuntu, by default, installs 7.x.x), and also install the [JPL library](https://jpl7.org/). You _also_ need to prepare your environment in a way that it sees the library (`libjpl.so` on Linux, for example) and add `jpl.jar` on your classpath. On `lein`, it means adding the following lines:
 
 ```clojure
   :resource-paths ["resources/jpl.jar"]
