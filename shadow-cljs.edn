@@ -1,0 +1,7 @@
+{:source-paths ["src" "test"]
+ :dependencies [[instaparse "1.4.12"]]
+ :builds {:dev {:target :node-script
+                :js-options {:keep-as-require #{"process"}}
+                :output-to "target/dev.js"
+                :main spock.all-tests/main
+                :compiler-options {:output-feature-set :es2018}}}}
